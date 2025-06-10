@@ -1,5 +1,12 @@
+// C:\NexusBionic\nexus-frontend\src\AnalizarUsuario.jsx
+
 import React, { useState } from 'react';
 import axios from 'axios';
+
+// Define la URL del backend usando una variable de entorno de Vite
+// En desarrollo local, usará 'http://localhost:3000' (la URL de tu backend local Express).
+// En Vercel, usará 'https://nexus-backend-vercel.vercel.app'.
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:3000';
 
 const AnalizarUsuario = () => {
   const [formData, setFormData] = useState({
@@ -34,16 +41,30 @@ const AnalizarUsuario = () => {
     setError(null);
     setResultado(null);
 
+    // --- CAMBIO CLAVE AQUÍ ---
+    // Tu backend de Vercel (`/api/analizarUsuario`) actualmente espera un objeto { texto: "..." }
+    // En lugar de enviar todo el formData, vamos a concatenar los campos
+    // relevantes en un solo string para el campo 'texto'.
+    // Si tu backend en el futuro necesita todos estos campos por separado,
+    // tendremos que modificar el backend para que los reciba.
+    const textoParaAnalizar = `Edad: ${formData.edad}, Sexo: ${formData.sexo}, Peso: ${formData.peso}kg, Altura: ${formData.altura}cm, Nivel de Actividad: ${formData.nivelActividad}, Objetivos: ${formData.objetivos}.`;
+
     try {
-      // Llamada POST a la función cloud local
+      // Usamos la URL del backend definida arriba
+      // y enviamos un objeto con la clave 'texto' como lo espera el backend.
       const response = await axios.post(
-        'http://127.0.0.1:5001/nexus-bionic/us-central1/analizarUsuario',
-        formData
+        `${BACKEND_API_URL}/api/analizarUsuario`,
+        { texto: textoParaAnalizar } // Aquí enviamos el objeto con la clave 'texto'
       );
 
       setResultado(response.data);
     } catch (err) {
-      setError('Error al comunicarse con el servidor.');
+      // Mejor manejo del error para ver qué devuelve el backend
+      if (err.response && err.response.data && err.response.data.mensaje) {
+        setError(`Error del servidor: ${err.response.data.mensaje}`);
+      } else {
+        setError('Error al comunicarse con el servidor. Verifica la consola para más detalles.');
+      }
       console.error(err);
     } finally {
       setCargando(false);

@@ -45,7 +45,7 @@ export default function App() {
     try {
       setLoading(true);
       const response = await axios.post(
-        'http://localhost:3000/api/analizarUsuario',
+        'https://nexus-backend-vercel.vercel.app/api/analizarUsuario', // ¡URL DEL BACKEND CORREGIDA!
         { texto: textoTrim, usuarioId }  // Enviamos el usuarioId junto al texto
       );
       setResultado(response.data);

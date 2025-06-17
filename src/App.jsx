@@ -8,10 +8,11 @@ export default function App() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [usuarioId, setUsuarioId] = useState('');
+  const [historial, setHistorial] = useState([]);
 
   const MAX_LENGTH = 500;
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-  // Al cargar el componente, generar o recuperar el usuarioId
   useEffect(() => {
     let id = localStorage.getItem('usuarioId');
     if (!id) {
@@ -20,6 +21,21 @@ export default function App() {
     }
     setUsuarioId(id);
   }, []);
+
+  useEffect(() => {
+    if (usuarioId && API_BASE_URL) {
+      obtenerHistorial();
+    }
+  }, [usuarioId]);
+
+  const obtenerHistorial = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/consultarHistorial?usuarioId=${usuarioId}`);
+      setHistorial(response.data.historial || []);
+    } catch (err) {
+      console.error('Error al cargar historial:', err);
+    }
+  };
 
   const analizarTexto = async () => {
     setError('');
@@ -42,13 +58,22 @@ export default function App() {
       return;
     }
 
+    if (!API_BASE_URL) {
+      setError('No se ha definido la URL del backend (VITE_API_URL).');
+      return;
+    }
+
     try {
       setLoading(true);
+
       const response = await axios.post(
-        'https://nexus-backend-vercel.vercel.app/api/analizarUsuario', // ¡URL DEL BACKEND CORREGIDA!
-        { texto: textoTrim, usuarioId }  // Enviamos el usuarioId junto al texto
+        `${API_BASE_URL}/analizarUsuario`,
+        { texto: textoTrim, usuarioId }
       );
+
       setResultado(response.data);
+      setTexto(''); // Limpiar textarea después del análisis
+      obtenerHistorial(); // Refrescar historial después de nuevo análisis
     } catch (e) {
       setError('Error al comunicarse con el servidor.');
       console.error(e);
@@ -58,7 +83,7 @@ export default function App() {
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ maxWidth: 600, margin: 'auto', padding: 20, fontFamily: 'Cabinet Grotesk Variable, sans-serif' }}>
       <h1>Nexus Bionic - Análisis de Usuario</h1>
       <p>Ingrese su motivo de consulta</p>
 
@@ -69,16 +94,21 @@ export default function App() {
         maxLength={MAX_LENGTH}
         aria-label="Motivo de consulta"
         disabled={loading}
+        style={{ width: '100%', height: 120, fontSize: 16, padding: 8, marginBottom: 10 }}
       ></textarea>
 
-      <button onClick={analizarTexto} disabled={loading}>
+      <button
+        onClick={analizarTexto}
+        disabled={loading}
+        style={{ padding: '10px 20px', fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer' }}
+      >
         {loading ? 'Analizando...' : 'Analizar'}
       </button>
 
       {error && <p style={{ color: 'red', marginTop: '0.8rem' }}>{error}</p>}
 
       {resultado && (
-        <section className="resultado" aria-live="polite">
+        <section className="resultado" aria-live="polite" style={{ marginTop: 20 }}>
           <h2>Resultado del Análisis</h2>
           <p><strong>Mensaje:</strong> {resultado.mensaje}</p>
           <p><strong>Resumen:</strong> {resultado.resumen}</p>
@@ -86,7 +116,26 @@ export default function App() {
         </section>
       )}
 
-      <footer>© 2025 Nexus Bionic. Todos los derechos reservados.</footer>
+      {historial.length > 0 && (
+        <section style={{ marginTop: 40 }}>
+          <h2>Historial de Análisis</h2>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {historial
+              .sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) // Más recientes primero
+              .map((item) => (
+                <li key={item.id} style={{ marginBottom: 15, padding: 10, border: '1px solid #ddd', borderRadius: 6 }}>
+                  <p><strong>Fecha:</strong> {new Date(item.fecha).toLocaleString()}</p>
+                  <p><strong>Texto ingresado:</strong> {item.texto}</p>
+                  <p><strong>Resumen:</strong> {item.resultado?.resumen}</p>
+                </li>
+              ))}
+          </ul>
+        </section>
+      )}
+
+      <footer style={{ marginTop: 40, fontSize: 12, color: '#666' }}>
+        © 2025 Nexus Bionic. Todos los derechos reservados.
+      </footer>
     </div>
   );
 }

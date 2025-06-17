@@ -45,3 +45,4 @@ Thumbs.db
 
 # Build outputs for Vite
 /dist
+.vercel

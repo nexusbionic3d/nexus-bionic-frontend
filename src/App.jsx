@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import logo from './assets/X.png'; // Asegurate que X.png esté en src/assets
 
 export default function App() {
   const [texto, setTexto] = useState('');
@@ -72,8 +73,8 @@ export default function App() {
       );
 
       setResultado(response.data);
-      setTexto(''); // Limpiar textarea después del análisis
-      obtenerHistorial(); // Refrescar historial después de nuevo análisis
+      setTexto('');
+      obtenerHistorial();
     } catch (e) {
       setError('Error al comunicarse con el servidor.');
       console.error(e);
@@ -84,7 +85,13 @@ export default function App() {
 
   return (
     <div className="container" style={{ maxWidth: 600, margin: 'auto', padding: 20, fontFamily: 'Cabinet Grotesk Variable, sans-serif' }}>
-      <h1>Nexus Bionic - Análisis de Usuario</h1>
+      
+      <header style={{ textAlign: 'center', marginBottom: 30 }}>
+        <img src={logo} alt="Nexus Bionic Logo" style={{ width: 80, height: 'auto', marginBottom: 10 }} />
+        <h1 style={{ fontSize: 28, color: '#1D4ED8' }}>Nexus Bionic</h1>
+        <p style={{ fontSize: 16, color: '#4B5563' }}>Plataforma Terapéutica Inteligente</p>
+      </header>
+
       <p>Ingrese su motivo de consulta</p>
 
       <textarea
@@ -121,7 +128,7 @@ export default function App() {
           <h2>Historial de Análisis</h2>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {historial
-              .sort((a, b) => new Date(b.fecha) - new Date(a.fecha)) // Más recientes primero
+              .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
               .map((item) => (
                 <li key={item.id} style={{ marginBottom: 15, padding: 10, border: '1px solid #ddd', borderRadius: 6 }}>
                   <p><strong>Fecha:</strong> {new Date(item.fecha).toLocaleString()}</p>
